@@ -36,14 +36,21 @@ public class CreateDatabaseAndTable {
 
                 //addMoreCats(conn, 5000);
                 // Test delete_cat(int id)
-                deleteCat(conn, 1);
-
+                //deleteCat(conn, 1);
                 // Test delete_cat(String where)
-                deleteCat(conn, "age > 10");
-
+                //deleteCat(conn, "age > 10");
                 // Test update_cat
-                updateCat(conn, 2, "age = 7, weight = 6.1", "name = 'Murka'");
+                //updateCat(conn, 2, "age = 7, weight = 6.1", "name = 'Murka'");
 
+                // Test the new functions
+                Cat cat = getCat(conn, 1);
+                System.out.println("Cat with id 1: " + cat);
+
+                System.out.println("Cats where age < 5:");
+                getCatWhere(conn, "age < 5");
+
+                System.out.println("All cats:");
+                getAllCats(conn);
                 // Test insert_cat
                 //insertCat(conn, "Barsik", "Абиссинская кошка", 3, 4.5);
                 //insertCat(conn, "Murka", "Бенгальская кошка", 5, 5.0);
@@ -69,6 +76,119 @@ public class CreateDatabaseAndTable {
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
+    }
+
+    // Cat class
+    static class Cat {
+        int id;
+        String name;
+        String type;
+        int age;
+        double weight;
+
+        public Cat(int id, String name, String type, int age, double weight) {
+            this.id = id;
+            this.name = name;
+            this.type = type;
+            this.age = age;
+            this.weight = weight;
+        }
+
+        @Override
+        public String toString() {
+            return "Cat{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", type='" + type + '\'' +
+                    ", age=" + age +
+                    ", weight=" + weight +
+                    '}';
+        }
+    }
+
+    // Method to get a cat by ID
+    public static Cat getCat(Connection conn, int id) {
+        String sql = "SELECT cats.id, cats.name, types.type, cats.age, cats.weight " +
+                "FROM " + CATS_TABLE_NAME +
+                " JOIN " + TABLE_NAME + " ON cats.type_id = types.id " +
+                "WHERE cats.id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new Cat(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("type"),
+                        rs.getInt("age"),
+                        rs.getDouble("weight")
+                );
+            } else {
+                System.out.println("No cat found with id: " + id);
+                return null;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting cat with id " + id + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    // Method to get cats where a condition is met
+    public static void getCatWhere(Connection conn, String where) {
+        String sql = "SELECT cats.id, cats.name, types.type, cats.age, cats.weight " +
+                "FROM " + CATS_TABLE_NAME +
+                " JOIN " + TABLE_NAME + " ON cats.type_id = types.id " +
+                "WHERE " + where;
+
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                Cat cat = new Cat(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("type"),
+                        rs.getInt("age"),
+                        rs.getDouble("weight")
+                );
+                System.out.println(cat);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting cats where " + where + ": " + e.getMessage());
+        }
+    }
+
+    // Method to get all cats
+    public static void getAllCats(Connection conn) {
+        String sql = "SELECT cats.id, cats.name, types.type, cats.age, cats.weight " +
+                "FROM " + CATS_TABLE_NAME +
+                " JOIN " + TABLE_NAME + " ON cats.type_id = types.id";
+
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                Cat cat = new Cat(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("type"),
+                        rs.getInt("age"),
+                        rs.getDouble("weight")
+                );
+                System.out.println(cat);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting all cats: " + e.getMessage());
+        }
+    }
+
+    //Helper methods
+    private static String readString(String str,ResultSet rs) throws SQLException{
+        return rs.getString(str)!=null?rs.getString(str):"";
+    }
+    private static int readInt(String str,ResultSet rs) throws SQLException{
+        return rs.getInt(str);
+    }
+    private static double readDouble(String str,ResultSet rs) throws SQLException{
+        return rs.getDouble(str);
     }
 
     // Method to create the table if it doesn't exist
