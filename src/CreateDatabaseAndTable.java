@@ -1,9 +1,13 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.*;
 
 public class CreateDatabaseAndTable {
 
     private static final String DATABASE_NAME = "My_cats.db";
     private static final String TABLE_NAME = "types";
+    private static final String TYPES_FILE = "types.txt";
 
     public static void main(String[] args) {
         // Create the database if it doesn't exist
@@ -24,10 +28,8 @@ public class CreateDatabaseAndTable {
                 // Create the table if it doesn't exist
                 createTableIfNotExists(conn);
 
-                // Insert the cat types
-                insertType(conn, "Абиссинская кошка");
-                insertType(conn, "Австралийский мист");
-                insertType(conn, "Американская жесткошерстная");
+                // Insert all types from the types.txt file
+                addAllTypes(conn, "types.txt");
 
             }
 
@@ -67,5 +69,43 @@ public class CreateDatabaseAndTable {
         } catch (SQLException e) {
             System.err.println("Error inserting type '" + type + "': " + e.getMessage());
         }
+    }
+
+    //Insert all types from the types.txt file
+    public static void addAllTypes(Connection conn, String file) {
+        String[] types = readTypesFromFile();
+        for (String type : types) {
+            insertType(conn, type);
+        }
+    }
+
+    //Reads the types from the types.txt file
+    private static String[] readTypesFromFile() {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(TYPES_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading types from file: " + e.getMessage());
+            return new String[0]; // Return an empty array in case of error
+        }
+
+        String fileContent = sb.toString();
+        String[] types = null;
+        //Extract string array from file
+        try{
+            String typesString = fileContent.substring(fileContent.indexOf("{") + 1, fileContent.lastIndexOf("}"));
+            types = typesString.split(",");
+            for(int i =0; i<types.length; i++){
+                types[i] = types[i].trim().replaceAll("\"", "");
+            }
+        } catch(Exception ex){
+            System.out.println("ERROR: "+ex.getMessage());
+            return new String[0];
+        }
+
+        return types;
     }
 }
