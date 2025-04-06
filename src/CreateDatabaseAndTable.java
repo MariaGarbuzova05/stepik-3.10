@@ -31,9 +31,18 @@ public class CreateDatabaseAndTable {
                 // Insert all types from the types.txt file
                 //addAllTypes(conn, "types.txt");
                 // Testing delete_type and update_type
-                deleteType(conn, 5); // Delete the type with id 5
-                updateType(conn, 1, "New Abyssinian Cat"); // Update type with id 1
+                //deleteType(conn, 5); // Delete the type with id 5
+                //updateType(conn, 1, "New Abyssinian Cat"); // Update type with id 1
 
+                // Testing the new functions
+                String type = getType(conn, 1);
+                System.out.println("Type with id 1: " + type);
+
+                System.out.println("Types where id < 5:");
+                getTypeWhere(conn, "id < 5");
+
+                System.out.println("All types:");
+                getAllTypes(conn);
             }
 
         } catch (SQLException e) {
@@ -142,6 +151,49 @@ public class CreateDatabaseAndTable {
             }
         } catch (SQLException e) {
             System.err.println("Error updating type with id " + id + ": " + e.getMessage());
+        }
+    }
+
+    // Method to get a cat type by ID
+    public static String getType(Connection conn, int id) {
+        String sql = "SELECT type FROM " + TABLE_NAME + " WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("type");
+            } else {
+                return null; // Or throw an exception if no type is found
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting type with id " + id + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    // Method to get types where a condition is met
+    public static void getTypeWhere(Connection conn, String where) {
+        String sql = "SELECT type FROM " + TABLE_NAME + " WHERE " + where;
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                System.out.println(rs.getString("type"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting types where " + where + ": " + e.getMessage());
+        }
+    }
+
+    // Method to get all types
+    public static void getAllTypes(Connection conn) {
+        String sql = "SELECT type FROM " + TABLE_NAME;
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                System.out.println(rs.getString("type"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting all types: " + e.getMessage());
         }
     }
 }
