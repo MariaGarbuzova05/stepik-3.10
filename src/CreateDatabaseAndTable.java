@@ -34,7 +34,15 @@ public class CreateDatabaseAndTable {
                 createTableIfNotExists(conn);
                 createCatsTableIfNotExists(conn);
 
-                addMoreCats(conn, 5000);
+                //addMoreCats(conn, 5000);
+                // Test delete_cat(int id)
+                deleteCat(conn, 1);
+
+                // Test delete_cat(String where)
+                deleteCat(conn, "age > 10");
+
+                // Test update_cat
+                updateCat(conn, 2, "age = 7, weight = 6.1", "name = 'Murka'");
 
                 // Test insert_cat
                 //insertCat(conn, "Barsik", "Абиссинская кошка", 3, 4.5);
@@ -340,6 +348,52 @@ public class CreateDatabaseAndTable {
             }
         } catch (SQLException e) {
             System.err.println("Error getting all types: " + e.getMessage());
+        }
+    }
+
+    // Method to delete a cat by ID
+    public static void deleteCat(Connection conn, int id) {
+        String sql = "DELETE FROM " + CATS_TABLE_NAME + " WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Deleted cat with id: " + id);
+            } else {
+                System.out.println("No cat found with id: " + id);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error deleting cat with id " + id + ": " + e.getMessage());
+        }
+    }
+
+    // Method to delete a cat by condition
+    public static void deleteCat(Connection conn, String where) {
+        String sql = "DELETE FROM " + CATS_TABLE_NAME + " WHERE " + where;
+        try (Statement stmt = conn.createStatement()) {
+            int rowsAffected = stmt.executeUpdate(sql);
+            if (rowsAffected > 0) {
+                System.out.println("Deleted cats where: " + where);
+            } else {
+                System.out.println("No cats found with condition: " + where);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error deleting cat with condition " + where + ": " + e.getMessage());
+        }
+    }
+
+    // Method to update a cat by ID
+    public static void updateCat(Connection conn, int id, String set, String where) {
+        String sql = "UPDATE " + CATS_TABLE_NAME + " SET " + set + " WHERE " + where;
+        try (Statement stmt = conn.createStatement()) {
+            int rowsAffected = stmt.executeUpdate(sql);
+            if (rowsAffected > 0) {
+                System.out.println("Updated cat with id: " + id + ", set " + set + ", where " + where);
+            } else {
+                System.out.println("No cat found with id: " + id + ", where " + where);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error updating cat with id " + id + ": " + e.getMessage());
         }
     }
 }
