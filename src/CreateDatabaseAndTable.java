@@ -7,6 +7,7 @@ public class CreateDatabaseAndTable {
 
     private static final String DATABASE_NAME = "My_cats.db";
     private static final String TABLE_NAME = "types";
+    private static final String CATS_TABLE_NAME = "cats";
     private static final String TYPES_FILE = "types.txt";
 
     public static void main(String[] args) {
@@ -27,6 +28,7 @@ public class CreateDatabaseAndTable {
 
                 // Create the table if it doesn't exist
                 createTableIfNotExists(conn);
+                createCatsTableIfNotExists(conn);
 
                 // Insert all types from the types.txt file
                 //addAllTypes(conn, "types.txt");
@@ -35,14 +37,14 @@ public class CreateDatabaseAndTable {
                 //updateType(conn, 1, "New Abyssinian Cat"); // Update type with id 1
 
                 // Testing the new functions
-                String type = getType(conn, 1);
-                System.out.println("Type with id 1: " + type);
+                //String type = getType(conn, 1);
+                //System.out.println("Type with id 1: " + type);
 
-                System.out.println("Types where id < 5:");
-                getTypeWhere(conn, "id < 5");
+                //System.out.println("Types where id < 5:");
+                //getTypeWhere(conn, "id < 5");
 
-                System.out.println("All types:");
-                getAllTypes(conn);
+                //System.out.println("All types:");
+                //getAllTypes(conn);
             }
 
         } catch (SQLException e) {
@@ -66,6 +68,30 @@ public class CreateDatabaseAndTable {
                 }
             } else {
                 System.out.println("Table '" + TABLE_NAME + "' already exists. Skipping creation.");
+            }
+        }
+    }
+
+    // Method to create the cats table if it doesn't exist
+    private static void createCatsTableIfNotExists(Connection conn) throws SQLException {
+        String checkTableSQL = "SELECT name FROM sqlite_master WHERE type='table' AND name=?";
+        try (PreparedStatement checkStmt = conn.prepareStatement(checkTableSQL)) {
+            checkStmt.setString(1, CATS_TABLE_NAME);
+            if (!checkStmt.executeQuery().next()) {
+                String createTableSQL = "CREATE TABLE " + CATS_TABLE_NAME + " (\n"
+                        + "   id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+                        + "   name VARCHAR(20) NOT NULL,\n"
+                        + "   type_id INTEGER NOT NULL,\n"
+                        + "   age INTEGER NOT NULL,\n"
+                        + "   weight DOUBLE NOT NULL,\n"
+                        + "   FOREIGN KEY (type_id) REFERENCES " + TABLE_NAME + "(id)\n"
+                        + ");";
+                try (Statement createStmt = conn.createStatement()) {
+                    createStmt.execute(createTableSQL);
+                    System.out.println("Table '" + CATS_TABLE_NAME + "' created successfully.");
+                }
+            } else {
+                System.out.println("Table '" + CATS_TABLE_NAME + "' already exists. Skipping creation.");
             }
         }
     }
