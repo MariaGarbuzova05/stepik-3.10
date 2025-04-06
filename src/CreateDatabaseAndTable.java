@@ -29,7 +29,10 @@ public class CreateDatabaseAndTable {
                 createTableIfNotExists(conn);
 
                 // Insert all types from the types.txt file
-                addAllTypes(conn, "types.txt");
+                //addAllTypes(conn, "types.txt");
+                // Testing delete_type and update_type
+                deleteType(conn, 5); // Delete the type with id 5
+                updateType(conn, 1, "New Abyssinian Cat"); // Update type with id 1
 
             }
 
@@ -107,5 +110,38 @@ public class CreateDatabaseAndTable {
         }
 
         return types;
+    }
+
+    // Method to delete a cat type by ID
+    public static void deleteType(Connection conn, int id) {
+        String sql = "DELETE FROM " + TABLE_NAME + " WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Deleted type with id: " + id);
+            } else {
+                System.out.println("No type found with id: " + id);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error deleting type with id " + id + ": " + e.getMessage());
+        }
+    }
+
+    // Method to update a cat type by ID
+    public static void updateType(Connection conn, int id, String newType) {
+        String sql = "UPDATE " + TABLE_NAME + " SET type = ? WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newType);
+            pstmt.setInt(2, id);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Updated type with id " + id + " to: " + newType);
+            } else {
+                System.out.println("No type found with id: " + id);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error updating type with id " + id + ": " + e.getMessage());
+        }
     }
 }
