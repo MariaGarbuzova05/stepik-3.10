@@ -2,6 +2,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class CreateDatabaseAndTable {
 
@@ -9,6 +12,7 @@ public class CreateDatabaseAndTable {
     private static final String TABLE_NAME = "types";
     private static final String CATS_TABLE_NAME = "cats";
     private static final String TYPES_FILE = "types.txt";
+    private static final String NAMES_FILE = "names.txt";
 
     public static void main(String[] args) {
         // Create the database if it doesn't exist
@@ -30,10 +34,12 @@ public class CreateDatabaseAndTable {
                 createTableIfNotExists(conn);
                 createCatsTableIfNotExists(conn);
 
+                addMoreCats(conn, 5000);
+
                 // Test insert_cat
-                insertCat(conn, "Barsik", "Абиссинская кошка", 3, 4.5);
-                insertCat(conn, "Murka", "Бенгальская кошка", 5, 5.0);
-                insertCat(conn, "Snowball", "Новая порода", 2, 3.2); // Testing a new cat type
+                //insertCat(conn, "Barsik", "Абиссинская кошка", 3, 4.5);
+                //insertCat(conn, "Murka", "Бенгальская кошка", 5, 5.0);
+                //insertCat(conn, "Snowball", "Новая порода", 2, 3.2); // Testing a new cat type
 
                 // Insert all types from the types.txt file
                 //addAllTypes(conn, "types.txt");
@@ -112,6 +118,66 @@ public class CreateDatabaseAndTable {
             }
         }
         return typeId;
+    }
+
+    //Get list of names
+    private static String[] readNamesFromFile() {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(NAMES_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading names from file: " + e.getMessage());
+            return new String[0]; // Return an empty array in case of error
+        }
+
+        String fileContent = sb.toString();
+        String[] names = null;
+        //Extract string array from file
+        try{
+            String namesString = fileContent.substring(fileContent.indexOf("{") + 1, fileContent.lastIndexOf("}"));
+            names = namesString.split(",");
+            for(int i =0; i<names.length; i++){
+                names[i] = names[i].trim().replaceAll("\"", "");
+            }
+        } catch(Exception ex){
+            System.out.println("ERROR: "+ex.getMessage());
+            return new String[0];
+        }
+
+        return names;
+    }
+
+    // Method to add more cats
+    public static void addMoreCats(Connection conn, int n) {
+        Random random = new Random();
+
+        //Get list of types from database
+        List<String> types = new ArrayList<>();
+        String sql = "SELECT type FROM " + TABLE_NAME;
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                types.add(rs.getString("type"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting all types: " + e.getMessage());
+            return;
+        }
+
+        String[] catNames = readNamesFromFile();
+
+        for (int i = 0; i < n; i++) {
+            String name = catNames[random.nextInt(catNames.length)];
+            String type = types.get(random.nextInt(types.size())); // Get a random type from the list
+            int age = random.nextInt(15) + 1; // Age between 1 and 15
+            double weight = 2.0 + (8.0 * random.nextDouble()); // Weight between 2.0 and 10.0
+            insertCat(conn, name, type, age, weight);
+        }
+
+        System.out.println("Added " + n + " random cats to the database.");
     }
 
     //Insert a new cat
