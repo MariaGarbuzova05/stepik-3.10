@@ -30,6 +30,11 @@ public class CreateDatabaseAndTable {
                 createTableIfNotExists(conn);
                 createCatsTableIfNotExists(conn);
 
+                // Test insert_cat
+                insertCat(conn, "Barsik", "Абиссинская кошка", 3, 4.5);
+                insertCat(conn, "Murka", "Бенгальская кошка", 5, 5.0);
+                insertCat(conn, "Snowball", "Новая порода", 2, 3.2); // Testing a new cat type
+
                 // Insert all types from the types.txt file
                 //addAllTypes(conn, "types.txt");
                 // Testing delete_type and update_type
@@ -93,6 +98,55 @@ public class CreateDatabaseAndTable {
             } else {
                 System.out.println("Table '" + CATS_TABLE_NAME + "' already exists. Skipping creation.");
             }
+        }
+    }
+
+    //Get or create and then get the id
+    private static int getOrCreateTypeId(Connection conn, String type) throws SQLException {
+        Integer typeId = getTypeID(conn, type);
+        if (typeId == null){
+            insertType(conn, type);
+            typeId = getTypeID(conn, type);
+            if (typeId == null){
+                throw new SQLException("Cannot find id from inserted type");
+            }
+        }
+        return typeId;
+    }
+
+    //Insert a new cat
+    public static void insertCat(Connection conn, String name, String type, int age, Double weight) {
+        try {
+            int typeId = getOrCreateTypeId(conn, type);
+
+            String sql = "INSERT INTO " + CATS_TABLE_NAME + " (name, type_id, age, weight) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, name);
+                pstmt.setInt(2, typeId);
+                pstmt.setInt(3, age);
+                pstmt.setDouble(4, weight);
+                pstmt.executeUpdate();
+                System.out.println("Inserted cat: " + name);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error inserting cat '" + name + "': " + e.getMessage());
+        }
+    }
+
+    //Get Type ID
+    public static Integer getTypeID(Connection conn, String type){
+        String sql = "SELECT id FROM " + TABLE_NAME + " WHERE type = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, type);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting type with type " + type + ": " + e.getMessage());
+            return null;
         }
     }
 
